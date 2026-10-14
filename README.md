@@ -75,7 +75,6 @@ Useful individual commands:
 | `pnpm test`          | Run the test suite once                               |
 | `pnpm test:watch`    | Run tests in watch mode                               |
 | `pnpm test:coverage` | Run tests and enforce coverage thresholds             |
-| `pnpm lint:package`  | Validate the published package shape                  |
 
 The example entry point is `src/index.ts`. Tests belong in `test/`, and build
 artifacts are written to `dist/`. A derived preset may replace this layout when
