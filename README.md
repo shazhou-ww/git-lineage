@@ -51,7 +51,7 @@ the preset's placeholder name.
 
 ## Requirements
 
-- Node.js 20.19 or newer
+- Node.js 22.13 or newer
 - pnpm 11.22 or newer
 
 ## Development
