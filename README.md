@@ -93,15 +93,32 @@ configuration out of the published tarball.
 The publish workflow runs for `v*` tags. Before the first release:
 
 1. Create an `npm` environment in the derived GitHub repository.
-2. On npmjs.com, add a Trusted Publisher for the derived repository using
-   `.github/workflows/publish-npm.yaml` and the `npm` environment.
+2. On npmjs.com, add a GitHub Actions Trusted Publisher with the exact
+   organization or user, repository, `publish-npm.yaml` workflow filename, and
+   `npm` environment. Enable both **Allow npm publish** and **Allow npm
+   dist-tag**.
 3. Replace all preset metadata and remove the private safeguard.
-4. Commit the release version to `main`.
-5. Create and push the matching tag, for example `v0.1.0`.
+4. Do not create an `NPM_TOKEN` secret or use an OTP. The workflow obtains a
+   short-lived credential through GitHub OIDC.
+5. Validate a new or changed Trusted Publisher without publishing:
+
+   ```sh
+   gh workflow run publish-npm.yaml --ref main
+   ```
+
+   The manual run assigns a temporary prerelease version and performs an npm dry
+   run without changing the package or a dist-tag.
+
+6. Commit the release version to `main`.
+7. Create and push the matching tag, for example `v0.1.0`.
 
 The workflow verifies that the tag matches `package.json`, that the commit is
 reachable from `main`, that the version is not already on npm, and that all
 checks pass before publishing with short-lived OIDC credentials.
+
+After the first successful OIDC release, set npm package **Publishing access**
+to **Require two-factor authentication and disallow tokens**. Trusted Publishing
+continues to work without a long-lived npm token.
 
 ## License
 
