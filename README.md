@@ -1,8 +1,7 @@
-# TypeScript base preset
+# npm package preset
 
-The root preset for strict TypeScript projects managed with pnpm. It contains
-the development baseline shared by more specialized presets without assuming an
-npm package, monorepo, application framework, or hosting platform.
+An opinionated starting point for a single, ESM-only npm package written in
+strict TypeScript.
 
 ## Included
 
@@ -10,47 +9,45 @@ npm package, monorepo, application framework, or hosting platform.
 - strict TypeScript and generated declaration files
 - ESLint and Prettier
 - Vitest with V8 coverage thresholds
+- package metadata validation with publint
 - CI on the oldest supported and current Node.js releases
+- npm Trusted Publishing through GitHub Actions
 - Dependabot updates for npm and GitHub Actions
 
-## Derive a repository
+## Create a package
 
 Derive a repository while retaining Git ancestry:
 
 ```sh
 git-lineage derive \
-  https://github.com/shazhou-ww/preset-typescript-base.git \
-  my-project \
+  https://github.com/shazhou-ww/preset-npm-package.git \
+  my-package \
   --branch main
-cd my-project
+cd my-package
 ```
 
 You can also use GitHub's **Use this template** button if you do not need to
 retain lineage.
 
-This is the root of the preset tree, so it intentionally has no
-`.git-lineage.yml`. The `git-lineage derive` command creates that file in the
-derived repository.
+This preset derives from
+[`preset-typescript-base`](https://github.com/shazhou-ww/preset-typescript-base).
+Its `.git-lineage.yml` records that immediate parent, and `git-lineage update`
+merges future parent changes without discarding package-specific commits.
 
-## Preset tree
+## Initialize the metadata
 
-```text
-preset-typescript-base
-├── preset-npm-package
-└── preset-pnpm-monorepo
-    └── preset-cloudflare-fullstack
-        └── preset-cloudflare-realtime
-```
+Before publishing a derived package:
 
-Each descendant has exactly one immediate parent. Descendants receive parent
-changes through ordinary Git merges:
+1. Replace `name`, `description`, `keywords`, `homepage`, `bugs`, and
+   `repository` in `package.json`.
+2. Set an initial version such as `0.1.0`.
+3. Remove `"private": true` or change it to `false` only when the package is
+   ready to publish.
+4. Replace the example API in `src/index.ts` and its tests.
+5. Replace this README and add your copyright line to `LICENSE`.
 
-```sh
-git-lineage update
-```
-
-The root package is private because it supplies development tooling rather than
-an npm artifact.
+Keeping the package private initially prevents an accidental publication under
+the preset's placeholder name.
 
 ## Requirements
 
@@ -75,10 +72,36 @@ Useful individual commands:
 | `pnpm test`          | Run the test suite once                               |
 | `pnpm test:watch`    | Run tests in watch mode                               |
 | `pnpm test:coverage` | Run tests and enforce coverage thresholds             |
+| `pnpm lint:package`  | Validate the published package shape                  |
 
-The example entry point is `src/index.ts`. Tests belong in `test/`, and build
-artifacts are written to `dist/`. A derived preset may replace this layout when
-its specialization requires a different project structure.
+The package entry point is `src/index.ts`. Tests belong in `test/`, and build
+artifacts are written to `dist/`.
+
+## Verify the package artifact
+
+Build and inspect the exact files npm would publish:
+
+```sh
+pnpm pack
+```
+
+The `files` allowlist in `package.json` keeps source, tests, and development
+configuration out of the published tarball.
+
+## Publish with npm Trusted Publishing
+
+The publish workflow runs for `v*` tags. Before the first release:
+
+1. Create an `npm` environment in the derived GitHub repository.
+2. On npmjs.com, add a Trusted Publisher for the derived repository using
+   `.github/workflows/publish-npm.yml` and the `npm` environment.
+3. Replace all preset metadata and remove the private safeguard.
+4. Commit the release version to `main`.
+5. Create and push the matching tag, for example `v0.1.0`.
+
+The workflow verifies that the tag matches `package.json`, that the commit is
+reachable from `main`, that the version is not already on npm, and that all
+checks pass before publishing with short-lived OIDC credentials.
 
 ## License
 

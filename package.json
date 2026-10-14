@@ -1,35 +1,57 @@
 {
-  "name": "preset-typescript-base",
+  "name": "preset-npm-package",
   "version": "0.0.0",
-  "description": "A strict TypeScript base preset for projects managed with pnpm.",
+  "description": "A strict TypeScript preset for publishing a single ESM package to npm.",
   "keywords": [
     "typescript",
-    "pnpm",
+    "npm",
+    "package",
     "preset",
     "template"
   ],
-  "homepage": "https://github.com/shazhou-ww/preset-typescript-base#readme",
+  "homepage": "https://github.com/shazhou-ww/preset-npm-package#readme",
   "bugs": {
-    "url": "https://github.com/shazhou-ww/preset-typescript-base/issues"
+    "url": "https://github.com/shazhou-ww/preset-npm-package/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/shazhou-ww/preset-typescript-base.git"
+    "url": "git+https://github.com/shazhou-ww/preset-npm-package.git"
   },
   "license": "MIT",
   "private": true,
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
   "engines": {
     "node": ">=20.19"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "packageManager": "pnpm@11.22.0",
   "scripts": {
     "build": "pnpm clean && tsc -p tsconfig.build.json",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build && pnpm lint:package",
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint . --max-warnings=0",
+    "lint:package": "publint",
+    "prepack": "pnpm build",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
@@ -42,6 +64,7 @@
     "eslint": "^10.12.0",
     "globals": "^17.13.0",
     "prettier": "^3.9.10",
+    "publint": "^0.3.25",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.71.2",
     "vitest": "^5.0.4"
