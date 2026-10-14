@@ -29,7 +29,7 @@ You can also use GitHub's **Use this template** button if you do not need to
 retain lineage.
 
 This is the root of the preset tree, so it intentionally has no
-`.git-lineage.yml`. The `git-lineage derive` command creates that file in the
+`.git-lineage.yaml`. The `git-lineage derive` command creates that file in the
 derived repository.
 
 ## Preset tree
