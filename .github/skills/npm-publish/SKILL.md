@@ -1,0 +1,151 @@
+---
+name: npm-publish
+description: "Use when: releasing or publishing git-lineage to npm, choosing or bumping its version, creating an npm release tag, monitoring the tag-triggered publish workflow, or diagnosing a failed npm release."
+argument-hint: "<stable-semver-version>"
+---
+
+# Publish git-lineage to npm
+
+Release `git-lineage` through `.github/workflows/publish-npm.yaml`. A pushed
+`v<package.version>` tag is the only normal publishing mechanism.
+
+## Release invariants
+
+- Use the official registry, `https://registry.npmjs.org/`.
+- Publish with GitHub Actions OIDC Trusted Publishing. Never create, request,
+  print, store, or use an `NPM_TOKEN`, and never request an OTP.
+- Accept stable SemVer releases only: `X.Y.Z` and tag `vX.Y.Z`.
+- The tag must exactly match `package.json` and point to a commit reachable
+  from `origin/main`.
+- Never move, reuse, force-push, or silently delete a release tag.
+- Never attempt to overwrite an npm version; registry versions are immutable.
+- Run the complete repository checks before any release push.
+- Treat a direct request to publish or release a specific version as approval
+  to push the prepared `main` commit and its matching tag. Otherwise, ask for
+  explicit confirmation before either push.
+
+## One-time Trusted Publisher setup
+
+The package must already exist on npm. In the `git-lineage` package settings
+on npmjs.com, add a GitHub Actions Trusted Publisher with:
+
+- organization or user: `shazhou-ww`
+- repository: `git-lineage`
+- workflow filename: `publish-npm.yaml`
+- environment: `npm`
+- allow npm dist-tag: enabled
+
+Do not add an npm token to GitHub Secrets. A new Trusted Publisher connection
+must complete its first successful publish within two days or npm expires it.
+The workflow pins npm 11.21.0 because OIDC dist-tag management requires npm
+11.21.0 or later on the npm 11 release line.
+
+After one OIDC release succeeds, set npm package **Publishing access** to
+**Require two-factor authentication and disallow tokens**. This does not
+disable Trusted Publishing.
+
+## Prepare a release
+
+1. Inspect all state before changing it:
+
+   ```sh
+   git status --short --branch
+   git fetch origin main --tags
+   git log --oneline --decorate -10
+   npm view git-lineage version dist-tags --json --registry=https://registry.npmjs.org/
+   ```
+
+2. Require a clean worktree and local `main` synchronized with `origin/main`.
+   Preserve unrelated changes. Do not release from another branch.
+
+3. Determine the version:
+   - Use the version explicitly requested by the user.
+   - If no version was supplied, ask the user to choose the stable SemVer
+     version. Do not infer a major-version change.
+   - Confirm the version is greater than every published version and does not
+     already exist on npm.
+
+4. Update the manifest without creating a tag:
+
+   ```sh
+   pnpm version <version> --no-git-tag-version
+   ```
+
+5. Update directly related release documentation when behavior or
+   requirements changed. Do not add speculative release notes.
+
+6. Validate the exact candidate:
+
+   ```sh
+   pnpm check
+   npm publish --dry-run --registry=https://registry.npmjs.org/
+   ```
+
+   The dry run must show the expected name, version, binary, files, and no
+   npm manifest auto-correction warnings.
+
+7. Commit the version and related release changes using the repository's
+   commit convention and required commit trailer. Do not amend unless the user
+   explicitly requests it.
+
+## Push and publish
+
+1. Push `main` normally, without force:
+
+   ```sh
+   git push origin main
+   ```
+
+2. Confirm the release commit is the refreshed `origin/main` tip.
+
+3. Create and push one annotated tag:
+
+   ```sh
+   git tag -a v<version> -m "release: v<version>"
+   git push origin refs/tags/v<version>
+   ```
+
+4. Find and watch the matching workflow run:
+
+   ```sh
+   gh run list --workflow publish-npm.yaml --limit 10
+   gh run watch <run-id> --exit-status
+   ```
+
+   Use `gh run view <run-id> --log-failed` when it fails.
+
+## Verify the published package
+
+Registry propagation can take a short time. Do not repeat `npm publish` while
+waiting. Verify the immutable version and execute it from an empty temporary
+directory:
+
+```sh
+npm view git-lineage@<version> name version dist-tags bin engines dist.integrity --json --registry=https://registry.npmjs.org/
+npm exec --yes --package=git-lineage@<version> -- git-lineage --version
+```
+
+Confirm that:
+
+- `latest` points to the released stable version;
+- the binary is `git-lineage`;
+- the executed version is exact;
+- the GitHub Actions run succeeded;
+- npm displays provenance for the release.
+
+Report the commit, tag, workflow run, npm version, checks, and any remaining
+manual configuration. Do not claim success from the workflow alone.
+
+## Failure handling
+
+- `ENEEDAUTH` or OIDC authentication failures: verify the case-sensitive npm
+  Trusted Publisher fields, exact `publish-npm.yaml` filename, GitHub-hosted
+  runner, `npm` environment, **Allow npm dist-tag**, and `id-token: write`. Do
+  not fall back to a token or OTP.
+- Existing npm version: stop. Never republish it.
+- Tag/version mismatch or tag not on `main`: fix the release preparation and
+  create a new version. Never move the pushed tag.
+- Failure after a tag push: inspect the run first. If npm already has the
+  version, verify it rather than retrying. If it does not, fix the cause and
+  release a new patch version; do not reuse the failed tag.
+- Never delete a remote release tag without explicit user approval.

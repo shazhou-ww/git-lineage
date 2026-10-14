@@ -185,6 +185,38 @@ pnpm check
 The integration suite creates temporary local Git repositories. It does not
 use the network or a real hosting service.
 
+## Releasing
+
+Maintainer releases use the
+[npm publish workflow](./.github/workflows/publish-npm.yaml) and npm Trusted
+Publishing. The workflow runs only for pushed `v*` tags, requires the tag to
+match the stable `package.json` version, verifies that the tagged commit is on
+`main`, runs `pnpm check`, and publishes through short-lived GitHub OIDC
+credentials. No `NPM_TOKEN` or OTP is used, and npm generates provenance
+automatically.
+
+Configure the `git-lineage` package on npmjs.com with this GitHub Actions
+Trusted Publisher:
+
+| Field | Value |
+| --- | --- |
+| Organization or user | `shazhou-ww` |
+| Repository | `git-lineage` |
+| Workflow filename | `publish-npm.yaml` |
+| Environment | `npm` |
+| Allow npm dist-tag | Enabled |
+
+The first OIDC publish must occur within two days of creating the Trusted
+Publisher connection. After it succeeds, set npm **Publishing access** to
+**Require two-factor authentication and disallow tokens**.
+
+Use the repository's
+[npm-publish skill](./.github/skills/npm-publish/SKILL.md) for the complete
+version, validation, commit, push, tag, workflow-monitoring, and registry
+verification procedure. Releases after the manually bootstrapped `0.1.0`
+start with a higher version; do not create a `v0.1.0` tag that would trigger a
+duplicate publish.
+
 ## MVP limitations
 
 - A repository has exactly one immediate parent.
