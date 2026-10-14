@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch: {}
 
 permissions: {}
 
@@ -39,13 +40,13 @@ jobs:
         with:
           node-version: 24.11.1
           cache: pnpm
-          registry-url: https://registry.npmjs.org/
 
       - name: Install the trusted publishing client
         run: npm install --global npm@11.21.0
 
       - name: Verify release tag
         env:
+          RELEASE_EVENT: ${{ github.event_name }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           node --input-type=commonjs <<'NODE'
@@ -61,7 +62,10 @@ jobs:
             process.exit(1);
           }
 
-          if (process.env.RELEASE_TAG !== expectedTag) {
+          if (
+            process.env.RELEASE_EVENT === "push" &&
+            process.env.RELEASE_TAG !== expectedTag
+          ) {
             console.error(
               `::error::Tag ${process.env.RELEASE_TAG} does not match package version ${expectedTag}.`,
             );
@@ -83,6 +87,7 @@ jobs:
           fi
 
       - name: Reject an existing npm version
+        if: github.event_name == 'push'
         env:
           PACKAGE_NAME: ${{ steps.release.outputs.name }}
           PACKAGE_VERSION: ${{ steps.release.outputs.version }}
@@ -99,4 +104,11 @@ jobs:
         run: pnpm check
 
       - name: Publish package
-        run: npm publish --access public --tag latest --registry=https://registry.npmjs.org/
+        if: github.event_name == 'push'
+        run: npm publish --access public --tag latest --registry=https://registry.npmjs.org/ --loglevel=verbose
+
+      - name: Validate trusted publishing
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          npm pkg set "version=0.0.0-oidc-dry-run.${GITHUB_RUN_ID}"
+          npm publish --dry-run --access public --tag oidc-dry-run --registry=https://registry.npmjs.org/ --loglevel=verbose

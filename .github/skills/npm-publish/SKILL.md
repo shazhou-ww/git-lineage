@@ -40,6 +40,16 @@ must complete its first successful publish within two days or npm expires it.
 The workflow pins npm 11.21.0 because OIDC dist-tag management requires npm
 11.21.0 or later on the npm 11 release line.
 
+Validate a new or changed connection without publishing:
+
+```sh
+gh workflow run publish-npm.yaml --ref main
+```
+
+The manual run substitutes a unique temporary version and executes
+`npm publish --dry-run` with verbose OIDC diagnostics. It never publishes a
+package or changes a dist-tag.
+
 After one OIDC release succeeds, set npm package **Publishing access** to
 **Require two-factor authentication and disallow tokens**. This does not
 disable Trusted Publishing.
@@ -141,7 +151,8 @@ manual configuration. Do not claim success from the workflow alone.
 - `ENEEDAUTH` or OIDC authentication failures: verify the case-sensitive npm
   Trusted Publisher fields, exact `publish-npm.yaml` filename, GitHub-hosted
   runner, `npm` environment, **Allow npm dist-tag**, and `id-token: write`. Do
-  not fall back to a token or OTP.
+  not fall back to a token or OTP. Run the manual dry-run diagnostic after
+  correcting the connection.
 - Existing npm version: stop. Never republish it.
 - Tag/version mismatch or tag not on `main`: fix the release preparation and
   create a new version. Never move the pushed tag.

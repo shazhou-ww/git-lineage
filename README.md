@@ -210,6 +210,15 @@ The first OIDC publish must occur within two days of creating the Trusted
 Publisher connection. After it succeeds, set npm **Publishing access** to
 **Require two-factor authentication and disallow tokens**.
 
+Validate the connection without publishing:
+
+```sh
+gh workflow run publish-npm.yaml --ref main
+```
+
+This manual mode uses a temporary package version and `npm publish --dry-run`;
+only pushed stable version tags can publish.
+
 Use the repository's
 [npm-publish skill](./.github/skills/npm-publish/SKILL.md) for the complete
 version, validation, commit, push, tag, workflow-monitoring, and registry
