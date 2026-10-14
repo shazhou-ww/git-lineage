@@ -47,6 +47,22 @@ named `git-<command>`, so the same global installation supports both
 `git-lineage ...` and `git lineage ...`. Use `-h` through `git lineage`; Git
 reserves `<external-command> --help` for its own documentation lookup.
 
+## Agent skill
+
+The repository includes a public
+[git-lineage skill](./skills/git-lineage/SKILL.md) that teaches compatible
+coding agents how to derive repositories, merge parent updates, and diagnose
+lineage problems safely.
+
+Install it for the desired agent with:
+
+```sh
+npx skills add shazhou-ww/git-lineage --skill git-lineage --global
+```
+
+The skill provides workflow knowledge; install the `git-lineage` CLI separately
+before asking an agent to run its commands.
+
 ## Derive a repository
 
 ```text
@@ -236,7 +252,7 @@ gh workflow run publish-npm.yaml --ref main
 This manual mode uses a temporary package version and `npm publish --dry-run`;
 only pushed stable version tags can publish.
 
-Use the repository's [npm-publish skill](./.github/skills/npm-publish/SKILL.md)
+Use the repository's [npm-publish skill](./.agents/skills/npm-publish/SKILL.md)
 for the complete version, validation, commit, push, tag, workflow-monitoring,
 and registry verification procedure. Releases after the manually bootstrapped
 `0.1.0` start with a higher version; do not create a `v0.1.0` tag that would
