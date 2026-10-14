@@ -1,60 +1,179 @@
-# npm package preset
+# git-lineage
 
-An opinionated starting point for a single, ESM-only npm package written in
-strict TypeScript.
+`git-lineage` derives one Git repository from another and keeps the derived
+repository moving forward with its immediate parent.
 
-## Included
+It is a pure Git CLI:
 
-- pnpm with a committed lockfile
-- strict TypeScript and generated declaration files
-- ESLint and Prettier
-- Vitest with V8 coverage thresholds
-- package metadata validation with publint
-- CI on the oldest supported and current Node.js releases
-- npm Trusted Publishing through GitHub Actions
-- Dependabot updates for npm and GitHub Actions
-
-## Create a package
-
-Derive a repository while retaining Git ancestry:
-
-```sh
-git-lineage derive \
-  https://github.com/shazhou-ww/preset-npm-package.git \
-  my-package \
-  --branch main
-cd my-package
-```
-
-You can also use GitHub's **Use this template** button if you do not need to
-retain lineage.
-
-This preset derives from
-[`preset-typescript-base`](https://github.com/shazhou-ww/preset-typescript-base).
-Its `.git-lineage.yaml` records that immediate parent, and `git-lineage update`
-merges future parent changes without discarding package-specific commits.
-
-## Initialize the metadata
-
-Before publishing a derived package:
-
-1. Replace `name`, `description`, `keywords`, `homepage`, `bugs`, and
-   `repository` in `package.json`.
-2. Set an initial version such as `0.1.0`.
-3. Remove `"private": true` or change it to `false` only when the package is
-   ready to publish.
-4. Replace the example API in `src/index.ts` and its tests.
-5. Replace this README and add your copyright line to `LICENSE`.
-
-Keeping the package private initially prevents an accidental publication under
-the preset's placeholder name.
+- no GitHub, GitLab, or hosting-provider API;
+- one immediate parent per repository;
+- full Git ancestry is retained;
+- parent updates are ordinary one-way merges, so child commits remain intact.
 
 ## Requirements
 
-- Node.js 22.13 or newer
-- pnpm 11.22 or newer
+- Node.js 20.11 or newer
+- Git
+
+Git must have an author and committer identity whenever an operation needs to
+create a commit:
+
+```sh
+git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+```
+
+## Run it
+
+Run without installing:
+
+```sh
+npx git-lineage derive ../preset my-project --branch main
+cd my-project
+npx git-lineage update
+```
+
+Or install it globally:
+
+```sh
+npm install --global git-lineage
+
+git-lineage --help
+git lineage -h
+```
+
+The package and binary are both named `git-lineage`. Git discovers binaries
+named `git-<command>`, so the same global installation supports both
+`git-lineage ...` and `git lineage ...`. Use `-h` through `git lineage`; Git
+reserves `<external-command> --help` for its own documentation lookup.
+
+## Derive a repository
+
+```text
+git-lineage derive <repository> [directory] --branch <branch>
+```
+
+Example:
+
+```sh
+git-lineage derive https://example.com/team/base.git product-a --branch main
+```
+
+`derive`:
+
+1. refuses to use a target path that already exists;
+2. clones the selected branch without truncating Git history or limiting the
+   clone to one branch;
+3. names the source remote `parent`;
+4. writes or replaces `.git-lineage.yaml`;
+5. creates a birth commit with a message like
+   `chore(lineage): derive from <repository>#<branch>`;
+6. verifies that the birth commit's first parent is the exact source commit
+   checked out by the clone.
+
+The target directory defaults to the repository name, following the usual
+`git clone` convention.
+
+If clone, configuration, identity validation, commit, or birth-parent
+verification fails, the incomplete target created by the command is removed. The
+command never reports success without a verified birth commit.
+
+## Configuration
+
+Each derived repository has this file at its root:
+
+```yaml
+version: 1
+createdFrom:
+  repository: ../base
+  branch: main
+```
+
+`.git-lineage.yaml` is the canonical filename. For backward compatibility,
+`update` can still read the legacy `.git-lineage.yml` filename when the
+canonical file is absent. New derived repositories always use `.yaml`, and
+`update` rejects repositories containing both filenames to avoid ambiguity.
+
+The file records the immediate parent repository and branch. It deliberately
+does not record a commit hash: the birth commit's first parent is the immutable
+record of the exact source commit used at creation time.
+
+### Relative repository paths
+
+A relative `createdFrom.repository` is always resolved from the root of the
+current derived repository, not from the shell's current directory.
+
+When `derive` receives a relative local repository argument, it resolves that
+argument from the invocation directory for cloning, then writes a portable
+relative path from the new repository root into `.git-lineage.yaml`. This keeps
+later `update` calls independent of the directory from which they are run.
+
+Absolute paths, `file://` URLs, HTTP(S) URLs, SSH URLs, and SCP-style Git
+locations are passed to Git as repository locations.
+
+## Update from the parent
+
+Run inside a derived repository or any of its subdirectories:
+
+```sh
+git-lineage update
+```
+
+`update`:
+
+1. finds the current repository root;
+2. requires a clean worktree, including no untracked files;
+3. reads and validates `.git-lineage.yaml`;
+4. restores a missing `parent` remote;
+5. fetches the configured immediate-parent branch;
+6. merges its remote-tracking commit with a normal Git merge.
+
+The update is one-way. It does not synchronize files in both directions, rebase
+the child, squash history, or push anything to the parent.
+
+### Parent remote safety
+
+`derive` marks its local `parent` remote as managed in `.git/config`. `update`
+can safely repair that remote or change its URL when the lineage configuration
+changes.
+
+If an existing `parent` remote points somewhere else and is not marked as
+managed by `git-lineage`, `update` stops instead of silently overwriting it.
+Rename or remove that unrelated remote and retry.
+
+### Merge conflicts
+
+Git conflict output is returned as an error and the normal merge state is left
+in place. Resolve it with the standard Git workflow:
+
+```sh
+git status
+# edit conflicted files
+git add <resolved-files>
+git commit
+```
+
+Or abandon the attempted update:
+
+```sh
+git merge --abort
+```
+
+`git-lineage` does not hide, auto-resolve, or automatically abort conflicts.
+
+## Command help
+
+```text
+git-lineage --help
+git-lineage derive --help
+git-lineage update --help
+```
 
 ## Development
+
+This repository uses pnpm and strict TypeScript. Running the published CLI
+requires Node.js 20.11 or newer; developing it requires Node.js 22.13 or newer
+because pnpm 11 has that requirement.
 
 ```sh
 pnpm install
@@ -74,51 +193,66 @@ Useful individual commands:
 | `pnpm test:coverage` | Run tests and enforce coverage thresholds             |
 | `pnpm lint:package`  | Validate the published package shape                  |
 
-The package entry point is `src/index.ts`. Tests belong in `test/`, and build
-artifacts are written to `dist/`.
+The integration suite creates temporary local Git repositories. It does not use
+the network or a real hosting service.
 
-## Verify the package artifact
+This repository itself derives from
+[`preset-npm-package`](https://github.com/shazhou-ww/preset-npm-package). Its
+`.git-lineage.yaml` records that immediate parent so future preset changes can
+be merged with the same `git-lineage update` workflow.
 
-Build and inspect the exact files npm would publish:
+## Releasing
+
+Maintainer releases use the
+[npm publish workflow](./.github/workflows/publish-npm.yaml) and npm Trusted
+Publishing. The workflow runs only for pushed `v*` tags, requires the tag to
+match the stable `package.json` version, verifies that the tagged commit is on
+`main`, runs `pnpm check`, and publishes through short-lived GitHub OIDC
+credentials. No `NPM_TOKEN` or OTP is used, and npm generates provenance
+automatically.
+
+Configure the `git-lineage` package on npmjs.com with this GitHub Actions
+Trusted Publisher:
+
+| Field                | Value              |
+| -------------------- | ------------------ |
+| Organization or user | `shazhou-ww`       |
+| Repository           | `git-lineage`      |
+| Workflow filename    | `publish-npm.yaml` |
+| Environment          | `npm`              |
+| Allow npm publish    | Enabled            |
+| Allow npm dist-tag   | Enabled            |
+
+The first OIDC publish must occur within two days of creating the Trusted
+Publisher connection. After it succeeds, set npm **Publishing access** to
+**Require two-factor authentication and disallow tokens**.
+
+Validate the connection without publishing:
 
 ```sh
-pnpm pack
+gh workflow run publish-npm.yaml --ref main
 ```
 
-The `files` allowlist in `package.json` keeps source, tests, and development
-configuration out of the published tarball.
+This manual mode uses a temporary package version and `npm publish --dry-run`;
+only pushed stable version tags can publish.
 
-## Publish with npm Trusted Publishing
+Use the repository's [npm-publish skill](./.github/skills/npm-publish/SKILL.md)
+for the complete version, validation, commit, push, tag, workflow-monitoring,
+and registry verification procedure. Releases after the manually bootstrapped
+`0.1.0` start with a higher version; do not create a `v0.1.0` tag that would
+trigger a duplicate publish.
 
-The publish workflow runs for `v*` tags. Before the first release:
+## MVP limitations
 
-1. Create an `npm` environment in the derived GitHub repository.
-2. On npmjs.com, add a GitHub Actions Trusted Publisher with the exact
-   organization or user, repository, `publish-npm.yaml` workflow filename, and
-   `npm` environment. Enable both **Allow npm publish** and **Allow npm
-   dist-tag**.
-3. Replace all preset metadata and remove the private safeguard.
-4. Do not create an `NPM_TOKEN` secret or use an OTP. The workflow obtains a
-   short-lived credential through GitHub OIDC.
-5. Validate a new or changed Trusted Publisher without publishing:
-
-   ```sh
-   gh workflow run publish-npm.yaml --ref main
-   ```
-
-   The manual run assigns a temporary prerelease version and performs an npm dry
-   run without changing the package or a dist-tag.
-
-6. Commit the release version to `main`.
-7. Create and push the matching tag, for example `v0.1.0`.
-
-The workflow verifies that the tag matches `package.json`, that the commit is
-reachable from `main`, that the version is not already on npm, and that all
-checks pass before publishing with short-lived OIDC credentials.
-
-After the first successful OIDC release, set npm package **Publishing access**
-to **Require two-factor authentication and disallow tokens**. Trusted Publishing
-continues to work without a long-lived npm token.
+- A repository has exactly one immediate parent.
+- Feature composition and multiple inheritance are not supported.
+- The tracked parent is a branch; tags and arbitrary revisions are not accepted
+  as lineage sources.
+- Updates are merges only. There is no rebase, cherry-pick, or bidirectional
+  synchronization mode.
+- Conflicts require normal manual Git resolution.
+- The CLI does not create hosted repositories, publish packages, push refs, or
+  call hosting-provider APIs.
 
 ## License
 

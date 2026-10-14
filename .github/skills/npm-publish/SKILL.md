@@ -1,15 +1,15 @@
 ---
 name: npm-publish
 description:
-  "Use when: releasing or publishing this package to npm, choosing or bumping
-  its version, creating an npm release tag, monitoring the tag-triggered publish
+  "Use when: releasing or publishing git-lineage to npm, choosing or bumping its
+  version, creating an npm release tag, monitoring the tag-triggered publish
   workflow, or diagnosing a failed npm release."
 argument-hint: "<stable-semver-version>"
 ---
 
-# Publish this package to npm
+# Publish git-lineage to npm
 
-Release the package through `.github/workflows/publish-npm.yaml`. A pushed
+Release `git-lineage` through `.github/workflows/publish-npm.yaml`. A pushed
 `v<package.version>` tag is the only normal publishing mechanism.
 
 ## Release invariants
@@ -29,21 +29,20 @@ Release the package through `.github/workflows/publish-npm.yaml`. A pushed
 
 ## One-time Trusted Publisher setup
 
-The package must already exist on npm. In its npmjs.com package settings, add a
-GitHub Actions Trusted Publisher with:
+The package must already exist on npm. In the `git-lineage` package settings on
+npmjs.com, add a GitHub Actions Trusted Publisher with:
 
-- organization or user: the GitHub repository owner
-- repository: the GitHub repository name
+- organization or user: `shazhou-ww`
+- repository: `git-lineage`
 - workflow filename: `publish-npm.yaml`
 - environment: `npm`
 - allow npm publish: enabled
 - allow npm dist-tag: enabled
 
-Create the `npm` environment in the GitHub repository. Do not add an npm token
-to GitHub Secrets. A new Trusted Publisher connection must complete its first
-successful publish within two days or npm expires it. The workflow pins npm
-11.21.0 because OIDC dist-tag management requires npm 11.21.0 or later on the
-npm 11 release line.
+Do not add an npm token to GitHub Secrets. A new Trusted Publisher connection
+must complete its first successful publish within two days or npm expires it.
+The workflow pins npm 11.21.0 because OIDC dist-tag management requires npm
+11.21.0 or later on the npm 11 release line.
 
 Validate a new or changed connection without publishing:
 
@@ -67,8 +66,7 @@ Trusted Publishing.
    git status --short --branch
    git fetch origin main --tags
    git log --oneline --decorate -10
-   node -p "require('./package.json').name"
-   npm view "$(node -p "require('./package.json').name")" version dist-tags --json --registry=https://registry.npmjs.org/
+   npm view git-lineage version dist-tags --json --registry=https://registry.npmjs.org/
    ```
 
 2. Require a clean worktree and local `main` synchronized with `origin/main`.
@@ -97,11 +95,12 @@ Trusted Publishing.
    npm publish --dry-run --registry=https://registry.npmjs.org/
    ```
 
-   The dry run must show the expected name, version, entry points, files, and no
-   npm manifest auto-correction warnings.
+   The dry run must show the expected name, version, binary, files, and no npm
+   manifest auto-correction warnings.
 
 7. Commit the version and related release changes using the repository's commit
-   convention. Do not amend unless the user explicitly requests it.
+   convention and required commit trailer. Do not amend unless the user
+   explicitly requests it.
 
 ## Push and publish
 
@@ -132,17 +131,19 @@ Trusted Publishing.
 ## Verify the published package
 
 Registry propagation can take a short time. Do not repeat `npm publish` while
-waiting. Verify the immutable version:
+waiting. Verify the immutable version and execute it from an empty temporary
+directory:
 
 ```sh
-npm view "<package-name>@<version>" name version dist-tags bin exports engines dist --json --registry=https://registry.npmjs.org/
+npm view git-lineage@<version> name version dist-tags bin engines dist.integrity --json --registry=https://registry.npmjs.org/
+npm exec --yes --package=git-lineage@<version> -- git-lineage --version
 ```
 
 Confirm that:
 
 - `latest` points to the released stable version;
-- entry points and binaries match `package.json`;
-- a package-specific import or CLI smoke test succeeds;
+- the binary is `git-lineage`;
+- the executed version is exact;
 - the GitHub Actions run succeeded;
 - npm displays provenance for the release.
 

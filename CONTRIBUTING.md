@@ -1,7 +1,8 @@
 # Contributing
 
-Install the pinned pnpm release through Corepack or pnpm itself, then install
-dependencies:
+Development requires Node.js 22.13 or newer because the pinned pnpm release has
+that requirement. Enable pnpm through Corepack or install it directly, then
+install dependencies:
 
 ```sh
 corepack enable

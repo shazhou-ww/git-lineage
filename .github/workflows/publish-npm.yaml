@@ -15,6 +15,7 @@ concurrency:
 jobs:
   publish:
     name: Publish verified tag
+    if: github.repository == 'shazhou-ww/git-lineage'
     runs-on: ubuntu-latest
     environment: npm
     timeout-minutes: 15
@@ -43,8 +44,7 @@ jobs:
       - name: Install the trusted publishing client
         run: npm install --global npm@11.21.0
 
-      - name: Verify release metadata
-        id: release
+      - name: Verify release tag
         env:
           RELEASE_EVENT: ${{ github.event_name }}
           RELEASE_TAG: ${{ github.ref_name }}
@@ -55,23 +55,9 @@ jobs:
           const stableVersion = /^\d+\.\d+\.\d+$/u;
           const expectedTag = `v${packageJson.version}`;
 
-          if (packageJson.private === true) {
-            console.error(
-              "::error::Set private to false or remove it before publishing.",
-            );
-            process.exit(1);
-          }
-
-          if (packageJson.name === "preset-npm-package") {
-            console.error(
-              "::error::Replace the preset package name before publishing.",
-            );
-            process.exit(1);
-          }
-
           if (!stableVersion.test(packageJson.version)) {
             console.error(
-              `::error::Publishing accepts stable SemVer versions only; received ${packageJson.version}.`,
+              `::error::Automated publishing accepts stable SemVer versions only; received ${packageJson.version}.`,
             );
             process.exit(1);
           }
@@ -91,6 +77,7 @@ jobs:
             `name=${packageJson.name}\nversion=${packageJson.version}\n`,
           );
           NODE
+        id: release
 
       - name: Verify release commit is on main
         run: |

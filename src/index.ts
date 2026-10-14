@@ -1,12 +1,19 @@
-/**
- * Return a friendly greeting for a non-empty name.
- */
-export function greet(name: string): string {
-  const normalizedName = name.trim();
-
-  if (normalizedName.length === 0) {
-    throw new TypeError("name must not be empty");
-  }
-
-  return `Hello, ${normalizedName}!`;
-}
+export {
+  LEGACY_LINEAGE_FILENAME,
+  LINEAGE_FILENAME,
+  parseLineageConfig,
+  readLineageConfig,
+  serializeLineageConfig,
+  type LineageConfig,
+} from "./config.js";
+export {
+  deriveRepository,
+  type DeriveOptions,
+  type DeriveResult,
+} from "./derive.js";
+export { GitCommandError, LineageError } from "./errors.js";
+export {
+  updateLineage,
+  type UpdateOptions,
+  type UpdateResult,
+} from "./update.js";

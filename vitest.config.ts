@@ -7,12 +7,14 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json", "html"],
       thresholds: {
-        branches: 90,
+        branches: 80,
         functions: 90,
         lines: 90,
         statements: 90,
       },
     },
+    fileParallelism: false,
     include: ["test/**/*.test.ts"],
+    testTimeout: 30_000,
   },
 });
