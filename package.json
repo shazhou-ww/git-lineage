@@ -28,7 +28,7 @@
     }
   },
   "bin": {
-    "git-lineage": "./dist/cli.js"
+    "git-lineage": "dist/cli.js"
   },
   "files": [
     "dist",
