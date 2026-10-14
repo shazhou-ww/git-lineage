@@ -1,6 +1,6 @@
 {
   "name": "git-lineage",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Derive Git repositories from an immediate parent and merge parent updates forward.",
   "keywords": [
     "git",
