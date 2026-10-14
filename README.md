@@ -94,7 +94,7 @@ The publish workflow runs for `v*` tags. Before the first release:
 
 1. Create an `npm` environment in the derived GitHub repository.
 2. On npmjs.com, add a Trusted Publisher for the derived repository using
-   `.github/workflows/publish-npm.yml` and the `npm` environment.
+   `.github/workflows/publish-npm.yaml` and the `npm` environment.
 3. Replace all preset metadata and remove the private safeguard.
 4. Commit the release version to `main`.
 5. Create and push the matching tag, for example `v0.1.0`.
