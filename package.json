@@ -1,0 +1,64 @@
+{
+  "name": "git-lineage",
+  "version": "0.1.0",
+  "description": "Derive Git repositories from an immediate parent and merge parent updates forward.",
+  "keywords": [
+    "git",
+    "lineage",
+    "cli",
+    "repository",
+    "workflow"
+  ],
+  "homepage": "https://github.com/shazhou-ww/git-lineage#readme",
+  "bugs": {
+    "url": "https://github.com/shazhou-ww/git-lineage/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shazhou-ww/git-lineage.git"
+  },
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "git-lineage": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20.11"
+  },
+  "packageManager": "pnpm@11.22.0",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint . --max-warnings=0",
+    "test": "vitest run",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "prepack": "pnpm build"
+  },
+  "dependencies": {
+    "commander": "^14.0.3",
+    "execa": "^9.6.1",
+    "yaml": "^2.9.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.5",
+    "eslint": "^10.12.0",
+    "globals": "^17.13.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.71.2",
+    "vitest": "^5.0.4"
+  }
+}
