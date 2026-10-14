@@ -11,7 +11,11 @@ import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { readLineageConfig } from "../src/config.js";
+import {
+  LEGACY_LINEAGE_FILENAME,
+  LINEAGE_FILENAME,
+  readLineageConfig,
+} from "../src/config.js";
 import { deriveRepository } from "../src/derive.js";
 import { runGit } from "../src/git.js";
 import { updateLineage } from "../src/update.js";
@@ -40,12 +44,23 @@ describe("local Git repository integration", () => {
     const sourceRoot = path.join(workspace, "parent repository");
     const childRoot = path.join(workspace, "derived child");
     await initializeRepository(sourceRoot);
-    const sourceCommit = await commitFile(
-      sourceRoot,
-      "shared.txt",
-      "source v1\n",
-      "source: initial",
+    await writeFile(
+      path.join(sourceRoot, LEGACY_LINEAGE_FILENAME),
+      [
+        "version: 1",
+        "createdFrom:",
+        "  repository: ../grandparent",
+        "  branch: main",
+        "",
+      ].join("\n"),
+      "utf8",
     );
+    await writeFile(
+      path.join(sourceRoot, "shared.txt"),
+      "source v1\n",
+      "utf8",
+    );
+    const sourceCommit = await commitAll(sourceRoot, "source: initial");
 
     const deriveResult = await deriveRepository({
       repository: "parent repository",
@@ -79,6 +94,14 @@ describe("local Git repository integration", () => {
       repository: "../parent repository",
       branch: "main",
     });
+    await expect(
+      access(path.join(childRoot, LEGACY_LINEAGE_FILENAME)),
+    ).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+    await expect(
+      access(path.join(childRoot, LINEAGE_FILENAME)),
+    ).resolves.toBeUndefined();
 
     const childCommit = await commitFile(
       childRoot,
@@ -145,7 +168,7 @@ describe("local Git repository integration", () => {
     const repositoryRoot = path.join(workspace, "invalid config");
     await initializeRepository(repositoryRoot);
     await writeFile(
-      path.join(repositoryRoot, ".git-lineage.yml"),
+      path.join(repositoryRoot, LINEAGE_FILENAME),
       [
         "version: 2",
         "createdFrom:",
@@ -165,6 +188,60 @@ describe("local Git repository integration", () => {
     ).rejects.toThrow(/unsupported version/u);
     expect(await gitOutput(repositoryRoot, ["rev-parse", "HEAD"])).toBe(head);
     expect(await gitOutput(repositoryRoot, ["remote"])).toBe("");
+  });
+
+  it("reads the legacy .yml configuration when canonical YAML is absent", async () => {
+    const workspace = await createWorkspace();
+    const repositoryRoot = path.join(workspace, "legacy config");
+    await initializeRepository(repositoryRoot);
+    await writeFile(
+      path.join(repositoryRoot, LEGACY_LINEAGE_FILENAME),
+      [
+        "version: 1",
+        "createdFrom:",
+        "  repository: ../parent",
+        "  branch: main",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+
+    await expect(readLineageConfig(repositoryRoot)).resolves.toEqual({
+      version: 1,
+      createdFrom: {
+        repository: "../parent",
+        branch: "main",
+      },
+    });
+  });
+
+  it("rejects ambiguous canonical and legacy configurations", async () => {
+    const workspace = await createWorkspace();
+    const repositoryRoot = path.join(workspace, "ambiguous config");
+    await initializeRepository(repositoryRoot);
+    const contents = [
+      "version: 1",
+      "createdFrom:",
+      "  repository: ../parent",
+      "  branch: main",
+      "",
+    ].join("\n");
+    await Promise.all([
+      writeFile(
+        path.join(repositoryRoot, LINEAGE_FILENAME),
+        contents,
+        "utf8",
+      ),
+      writeFile(
+        path.join(repositoryRoot, LEGACY_LINEAGE_FILENAME),
+        contents,
+        "utf8",
+      ),
+    ]);
+
+    await expect(readLineageConfig(repositoryRoot)).rejects.toThrow(
+      /Both .*\.git-lineage\.yaml .* legacy .*\.git-lineage\.yml/u,
+    );
   });
 
   it("rejects a dirty worktree before fetching from the parent", async () => {
@@ -329,7 +406,7 @@ describe("local Git repository integration", () => {
       "unrelated: initial",
     );
     await writeFile(
-      path.join(childRoot, ".git-lineage.yml"),
+      path.join(childRoot, LINEAGE_FILENAME),
       [
         "version: 1",
         "createdFrom:",

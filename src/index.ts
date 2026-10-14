@@ -1,4 +1,5 @@
 export {
+  LEGACY_LINEAGE_FILENAME,
   LINEAGE_FILENAME,
   parseLineageConfig,
   readLineageConfig,

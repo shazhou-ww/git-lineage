@@ -65,7 +65,7 @@ git-lineage derive https://example.com/team/base.git product-a --branch main
 2. clones the selected branch without truncating Git history or limiting the
    clone to one branch;
 3. names the source remote `parent`;
-4. writes or replaces `.git-lineage.yml`;
+4. writes or replaces `.git-lineage.yaml`;
 5. creates a birth commit with a message like
    `chore(lineage): derive from <repository>#<branch>`;
 6. verifies that the birth commit's first parent is the exact source commit
@@ -89,6 +89,11 @@ createdFrom:
   branch: main
 ```
 
+`.git-lineage.yaml` is the canonical filename. For backward compatibility,
+`update` can still read the legacy `.git-lineage.yml` filename when the
+canonical file is absent. New derived repositories always use `.yaml`, and
+`update` rejects repositories containing both filenames to avoid ambiguity.
+
 The file records the immediate parent repository and branch. It deliberately
 does not record a commit hash: the birth commit's first parent is the immutable
 record of the exact source commit used at creation time.
@@ -100,7 +105,7 @@ current derived repository, not from the shell's current directory.
 
 When `derive` receives a relative local repository argument, it resolves that
 argument from the invocation directory for cloning, then writes a portable
-relative path from the new repository root into `.git-lineage.yml`. This keeps
+relative path from the new repository root into `.git-lineage.yaml`. This keeps
 later `update` calls independent of the directory from which they are run.
 
 Absolute paths, `file://` URLs, HTTP(S) URLs, SSH URLs, and SCP-style Git
@@ -118,7 +123,7 @@ git-lineage update
 
 1. finds the current repository root;
 2. requires a clean worktree, including no untracked files;
-3. reads and validates `.git-lineage.yml`;
+3. reads and validates `.git-lineage.yaml`;
 4. restores a missing `parent` remote;
 5. fetches the configured immediate-parent branch;
 6. merges its remote-tracking commit with a normal Git merge.

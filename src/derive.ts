@@ -1,7 +1,11 @@
 import { lstat, rm } from "node:fs/promises";
 import path from "node:path";
 
-import { LINEAGE_FILENAME, writeLineageConfig } from "./config.js";
+import {
+  LEGACY_LINEAGE_FILENAME,
+  LINEAGE_FILENAME,
+  writeLineageConfig,
+} from "./config.js";
 import { describeError, LineageError } from "./errors.js";
 import { assertGitIdentity, runGit } from "./git.js";
 import {
@@ -101,6 +105,13 @@ export async function deriveRepository(
       cwd: targetRoot,
       environment: options.environment,
     });
+    await runGit(
+      ["rm", "--ignore-unmatch", "--", LEGACY_LINEAGE_FILENAME],
+      {
+        cwd: targetRoot,
+        environment: options.environment,
+      },
+    );
     await runGit(["add", "--", LINEAGE_FILENAME], {
       cwd: targetRoot,
       environment: options.environment,

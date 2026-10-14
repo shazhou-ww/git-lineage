@@ -1,11 +1,12 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { access, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { parse, stringify } from "yaml";
 
 import { LineageError } from "./errors.js";
 
-export const LINEAGE_FILENAME = ".git-lineage.yml";
+export const LINEAGE_FILENAME = ".git-lineage.yaml";
+export const LEGACY_LINEAGE_FILENAME = ".git-lineage.yml";
 
 export interface LineageConfig {
   readonly version: 1;
@@ -18,19 +19,31 @@ export interface LineageConfig {
 export async function readLineageConfig(
   repositoryRoot: string,
 ): Promise<LineageConfig> {
-  const configPath = path.join(repositoryRoot, LINEAGE_FILENAME);
+  const canonicalPath = path.join(repositoryRoot, LINEAGE_FILENAME);
+  const legacyPath = path.join(repositoryRoot, LEGACY_LINEAGE_FILENAME);
+  const [canonicalExists, legacyExists] = await Promise.all([
+    pathExists(canonicalPath),
+    pathExists(legacyPath),
+  ]);
+
+  if (canonicalExists && legacyExists) {
+    throw new LineageError(
+      `Both ${canonicalPath} and legacy ${legacyPath} exist. Remove the legacy file before continuing.`,
+    );
+  }
+
+  if (!canonicalExists && !legacyExists) {
+    throw new LineageError(
+      `Lineage configuration not found at ${canonicalPath}.`,
+    );
+  }
+
+  const configPath = canonicalExists ? canonicalPath : legacyPath;
   let contents: string;
 
   try {
     contents = await readFile(configPath, "utf8");
   } catch (error) {
-    if (isNodeError(error, "ENOENT")) {
-      throw new LineageError(
-        `Lineage configuration not found at ${configPath}.`,
-        { cause: error },
-      );
-    }
-
     throw new LineageError(
       `Unable to read lineage configuration at ${configPath}: ${
         error instanceof Error ? error.message : String(error)
@@ -129,6 +142,24 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
+}
+
+async function pathExists(targetPath: string): Promise<boolean> {
+  try {
+    await access(targetPath);
+    return true;
+  } catch (error) {
+    if (isNodeError(error, "ENOENT")) {
+      return false;
+    }
+
+    throw new LineageError(
+      `Unable to inspect lineage configuration at ${targetPath}: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+      { cause: error },
+    );
+  }
 }
 
 function isNodeError(error: unknown, code: string): boolean {
