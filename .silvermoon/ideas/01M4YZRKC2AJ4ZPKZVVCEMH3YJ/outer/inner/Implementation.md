@@ -2,39 +2,34 @@
 
 ## Steps
 
-### I-S01: Define preset source and metadata models
+### I-S01: 定义 preset 源和元数据模型
 
-Add validated models for canonical repository identity, GitHub aliases,
-repository-owned preset metadata, the user registry, and generated cache.
+为 canonical repository identity、GitHub alias、仓库拥有的 preset 元数据、
+用户 registry 和生成的 cache 增加经过验证的模型。
 
-### I-S02: Implement registry and refresh operations
+### I-S02: 实现 registry 和刷新操作
 
-Implement portable storage resolution and the add, remove, and refresh
-operations using Git-backed metadata retrieval without duplicating repository
-metadata into the authored registry.
+实现可移植的存储路径解析，以及添加、移除和刷新操作。元数据通过 Git 获取，
+不把仓库元数据重复写入人工维护的 registry。
 
-### I-S03: Expose preset discovery through the CLI
+### I-S03: 通过 CLI 提供 preset 发现能力
 
-Add the `preset` command group, stable human and JSON output, tree rendering,
-documentation, and focused test coverage while preserving existing derive and
-update behavior.
+增加 `preset` 命令组、稳定的人类可读与 JSON 输出、树形渲染、文档和聚焦测试，
+同时保持现有 derive 与 update 行为。
 
 ## Acceptance criteria
 
-### I-AC01: Source identity is deterministic and safe
+### I-AC01: 源 identity 具有确定性且安全
 
-Tests prove GitHub transport variants resolve to one canonical URL and
-`owner/repo` alias, other sources retain full identities, local paths remain
-stable, and credential-bearing URLs are rejected.
+测试证明 GitHub 的不同传输形式会解析为同一个 canonical URL 和 `owner/repo`
+alias；其他源保留完整 identity，本地路径保持稳定，包含凭据的 URL 会被拒绝。
 
-### I-AC02: Registry and cache preserve authority boundaries
+### I-AC02: Registry 和 cache 保持权威边界
 
-Tests prove add, remove, and refresh update files atomically, retain only source
-locators in the registry, derive metadata from repository content, retain valid
-old cache data after failed refreshes, and report failures explicitly.
+测试证明添加、移除和刷新会原子更新文件；registry 只保留源定位信息；元数据从仓库
+内容派生；刷新失败时保留原有有效 cache，并明确报告失败。
 
-### I-AC03: Presets are discoverable without regressions
+### I-AC03: Preset 可发现且不产生回归
 
-CLI tests prove list, tree, JSON, show, add, remove, and refresh behavior, while
-the repository's formatting, linting, type checking, tests, build, and package
-validation all pass.
+CLI 测试证明 list、tree、JSON、show、add、remove 和 refresh 行为正确，同时仓库的
+格式、lint、类型检查、测试、构建和 package 验证全部通过。
