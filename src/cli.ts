@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
+import { realpathSync } from "node:fs";
 import { createRequire } from "node:module";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 
 import { Command } from "commander";
 
@@ -465,10 +466,17 @@ export async function runCli(
   }
 }
 
-const entryPoint = process.argv[1];
-if (
-  entryPoint !== undefined &&
-  import.meta.url === pathToFileURL(entryPoint).href
-) {
+export function isMainModule(
+  moduleUrl: string,
+  entryPoint: string | undefined,
+  canonicalizePath: (filePath: string) => string = realpathSync,
+): boolean {
+  return (
+    entryPoint !== undefined &&
+    canonicalizePath(fileURLToPath(moduleUrl)) === canonicalizePath(entryPoint)
+  );
+}
+
+if (isMainModule(import.meta.url, process.argv[1])) {
   await runCli();
 }

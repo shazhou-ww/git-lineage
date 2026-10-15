@@ -1,6 +1,13 @@
+import { pathToFileURL } from "node:url";
+
 import { describe, expect, it, vi } from "vitest";
 
-import { createProgram, runCli, type CliDependencies } from "../src/cli.js";
+import {
+  createProgram,
+  isMainModule,
+  runCli,
+  type CliDependencies,
+} from "../src/cli.js";
 
 function createDependencies(
   overrides: Partial<CliDependencies> = {},
@@ -25,7 +32,7 @@ describe("CLI", () => {
     const program = createProgram(createDependencies());
 
     expect(program.name()).toBe("git-lineage");
-    expect(program.version()).toBe("0.2.0");
+    expect(program.version()).toBe("0.2.1");
     expect(program.commands.map((command) => command.name())).toEqual([
       "derive",
       "update",
@@ -36,6 +43,21 @@ describe("CLI", () => {
         .find((command) => command.name() === "preset")
         ?.commands.map((command) => command.name()),
     ).toEqual(["add", "remove", "refresh", "list", "show"]);
+  });
+
+  it("recognizes an entry point through a linked install path", () => {
+    const canonicalizePath = vi.fn((filePath: string) =>
+      filePath.includes("install") ? "canonical-cli-path" : filePath,
+    );
+
+    expect(
+      isMainModule(
+        pathToFileURL("real/install/dist/cli.js").href,
+        "/linked/install/dist/cli.js",
+        canonicalizePath,
+      ),
+    ).toBe(true);
+    expect(canonicalizePath).toHaveBeenCalledTimes(2);
   });
 
   it("derives a repository and prints the result", async () => {
