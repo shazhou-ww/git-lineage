@@ -25,7 +25,7 @@ describe("CLI", () => {
     const program = createProgram(createDependencies());
 
     expect(program.name()).toBe("git-lineage");
-    expect(program.version()).toBe("0.1.2");
+    expect(program.version()).toBe("0.2.0");
     expect(program.commands.map((command) => command.name())).toEqual([
       "derive",
       "update",

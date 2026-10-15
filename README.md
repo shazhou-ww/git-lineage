@@ -1,5 +1,10 @@
 # git-lineage
 
+[![npm version](https://img.shields.io/npm/v/git-lineage.svg)](https://www.npmjs.com/package/git-lineage)
+[![CI](https://github.com/shazhou-ww/git-lineage/actions/workflows/ci.yaml/badge.svg)](https://github.com/shazhou-ww/git-lineage/actions/workflows/ci.yaml)
+[![Node.js](https://img.shields.io/node/v/git-lineage.svg)](https://www.npmjs.com/package/git-lineage)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+
 `git-lineage` derives one Git repository from another and keeps the derived
 repository moving forward with its immediate parent.
 
@@ -320,6 +325,9 @@ Useful individual commands:
 The integration suite creates temporary local Git repositories. It does not use
 the network or a real hosting service.
 
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the development workflow and pull
+request expectations.
+
 This repository itself derives from
 [`preset-npm-package`](https://github.com/shazhou-ww/preset-npm-package). Its
 `.git-lineage.yaml` records that immediate parent so future preset changes can
@@ -381,4 +389,7 @@ trigger a duplicate publish.
 
 ## License
 
-MIT
+[MIT](./LICENSE). See [CONTRIBUTING.md](./CONTRIBUTING.md) before proposing a
+change, [SECURITY.md](./SECURITY.md) to report a vulnerability privately, and
+[SUPPORT.md](./SUPPORT.md) for support channels. Participation in this project
+is governed by [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md).

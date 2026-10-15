@@ -1,0 +1,40 @@
+name: Feature request
+description: Propose a focused improvement to git-lineage
+title: "feat: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What workflow or limitation should be improved?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description:
+        Describe the desired user-visible behavior and command examples.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe current workarounds or other approaches.
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility considerations
+      description:
+        Note effects on existing commands, configuration, output, or public
+        APIs.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues for similar proposals.
+          required: true

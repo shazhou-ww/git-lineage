@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/shazhou-ww/git-lineage/security/advisories/new
+    about: Report suspected vulnerabilities privately.
+  - name: Usage and support
+    url: https://github.com/shazhou-ww/git-lineage/blob/main/SUPPORT.md
+    about: Review support guidance before opening an issue.
