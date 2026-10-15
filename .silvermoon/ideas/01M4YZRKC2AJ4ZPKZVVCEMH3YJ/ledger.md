@@ -4,15 +4,15 @@
 
 ### Implementation steps
 
-- [ ] **I-S01:** 定义 preset 源和元数据模型
-- [ ] **I-S02:** 实现 registry 和刷新操作
-- [ ] **I-S03:** 通过 CLI 提供 preset 发现能力
+- [x] **I-S01:** 定义 preset 源和元数据模型
+- [x] **I-S02:** 实现 registry 和刷新操作
+- [x] **I-S03:** 通过 CLI 提供 preset 发现能力
 
 ### Implementation acceptance criteria
 
-- [ ] **I-AC01:** 源 identity 具有确定性且安全
-- [ ] **I-AC02:** Registry 和 cache 保持权威边界
-- [ ] **I-AC03:** Preset 可发现且不产生回归
+- [x] **I-AC01:** 源 identity 具有确定性且安全
+- [x] **I-AC02:** Registry 和 cache 保持权威边界
+- [x] **I-AC03:** Preset 可发现且不产生回归
 
 ## Deployment
 

@@ -14,10 +14,9 @@
 
 ### D-AC01: 打包后的命令可以隔离运行
 
-对构建产物执行隔离 smoke test，能够显示 preset 帮助并离线读取目录，且不使用开发者
-真实的 registry 或 cache。
+对构建产物执行隔离 smoke
+test，能够显示 preset 帮助并离线读取目录，且不使用开发者真实的 registry 或 cache。
 
 ### D-AC02: Package 已为后续 release 做好准备
 
-Package 验证和文档审阅证明所需 runtime 文件与使用说明均已就绪；npm 发布仍不在
-本 idea 范围内。
+Package 验证和文档审阅证明所需 runtime 文件与使用说明均已就绪；npm 发布仍不在本 idea 范围内。

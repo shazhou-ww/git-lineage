@@ -177,12 +177,120 @@ git merge --abort
 
 `git-lineage` does not hide, auto-resolve, or automatically abort conflicts.
 
+## Local preset registry
+
+The optional local preset registry makes commonly used parent repositories
+discoverable without turning a hosting provider into a dependency. The registry
+is a user-owned source index, preset repositories remain the source of truth,
+and a generated cache supports fast offline listing.
+
+### Repository-owned preset metadata
+
+A preset repository opts in by committing `.git-lineage-preset.yaml`:
+
+```yaml
+version: 1
+title: Publishable npm package
+description: TypeScript package with pnpm, tests, and npm publishing defaults.
+```
+
+`title` is optional; `description` is required. A derived preset's existing
+`.git-lineage.yaml` supplies its immediate parent relationship. A root preset
+simply has no lineage file.
+
+Refreshes use Git itself: the CLI shallow-fetches the registered branch into an
+isolated temporary bare repository and reads the files at the fetched commit. It
+does not execute repository code or call GitHub, GitLab, or another hosting API.
+
+### Add and remove sources
+
+```sh
+git-lineage preset add https://github.com/acme/preset-node.git
+git-lineage preset add git@git.example.com:platform/preset-cli.git --branch stable
+
+git-lineage preset remove acme/preset-node
+git-lineage preset remove https://git.example.com/platform/preset-cli.git
+```
+
+If `--branch` is omitted, `add` resolves the remote symbolic `HEAD` once and
+stores that branch. One canonical repository can have one registered branch.
+
+The canonical preset name is its normalized full repository URL. Public
+`github.com` HTTPS, SSH, and SCP-style locators normalize to
+`https://github.com/<owner>/<repo>` and also receive the case-insensitive
+`owner/repo` alias. Other hosts use their complete normalized URL. Local paths
+are stored as absolute source locators and displayed with stable `file://`
+canonical names.
+
+URLs containing inline HTTP credentials, query strings, or fragments are
+rejected. Use a Git credential helper or SSH instead.
+
+### Refresh and inspect presets
+
+```sh
+git-lineage preset refresh
+git-lineage preset refresh acme/preset-node
+
+git-lineage preset list
+git-lineage preset list --tree
+git-lineage preset list --json
+git-lineage preset list --refresh
+
+git-lineage preset show acme/preset-node
+git-lineage preset show acme/preset-node --json
+git-lineage preset show acme/preset-node --refresh
+```
+
+`list` and `show` read the local registry and cache without network access.
+`--refresh` opts into Git access first. A failed refresh preserves the previous
+valid cache entry, reports every failed source, and exits unsuccessfully instead
+of presenting the refresh as successful. An unregistered parent remains visible
+as an external URL in table, detail, JSON, and tree output.
+
+### Registry and cache files
+
+The versioned registry contains only source locators:
+
+```yaml
+version: 1
+sources:
+  - repository: git@github.com:acme/preset-node.git
+    branch: main
+  - repository: https://git.example.com/platform/preset-cli.git
+    branch: stable
+```
+
+Descriptions, titles, source commits, fetch times, normalized identities, and
+parent relationships live only in the replaceable generated cache.
+
+Default locations are:
+
+| Platform      | Registry                                     | Cache                                           |
+| ------------- | -------------------------------------------- | ----------------------------------------------- |
+| Windows       | `%APPDATA%\git-lineage\registry.yaml`        | `%LOCALAPPDATA%\git-lineage\preset-cache.yaml`  |
+| macOS / Linux | `$XDG_CONFIG_HOME/git-lineage/registry.yaml` | `$XDG_CACHE_HOME/git-lineage/preset-cache.yaml` |
+| Fallback      | `~/.config/git-lineage/registry.yaml`        | `~/.cache/git-lineage/preset-cache.yaml`        |
+
+Override them for a team-maintained index, automation, or isolated testing:
+
+```sh
+git-lineage preset list \
+  --registry ./team-presets.yaml \
+  --cache ./generated-preset-cache.yaml
+```
+
+The equivalent environment variables are `GIT_LINEAGE_PRESET_REGISTRY` and
+`GIT_LINEAGE_PRESET_CACHE`. Command options take precedence.
+
 ## Command help
 
 ```text
 git-lineage --help
 git-lineage derive --help
 git-lineage update --help
+git-lineage preset --help
+git-lineage preset add --help
+git-lineage preset list --help
 ```
 
 ## Development
@@ -267,6 +375,7 @@ trigger a duplicate publish.
 - Updates are merges only. There is no rebase, cherry-pick, or bidirectional
   synchronization mode.
 - Conflicts require normal manual Git resolution.
+- The local preset registry tracks one branch per canonical repository.
 - The CLI does not create hosted repositories, publish packages, push refs, or
   call hosting-provider APIs.
 
