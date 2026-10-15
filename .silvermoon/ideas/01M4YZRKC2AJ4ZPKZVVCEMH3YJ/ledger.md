@@ -18,10 +18,10 @@
 
 ### Deployment steps
 
-- [ ] **D-S01:** 验证打包后的 CLI
-- [ ] **D-S02:** 确认 release readiness
+- [x] **D-S01:** 验证打包后的 CLI
+- [x] **D-S02:** 确认 release readiness
 
 ### Deployment acceptance criteria
 
-- [ ] **D-AC01:** 打包后的命令可以隔离运行
-- [ ] **D-AC02:** Package 已为后续 release 做好准备
+- [x] **D-AC01:** 打包后的命令可以隔离运行
+- [x] **D-AC02:** Package 已为后续 release 做好准备
